@@ -1,0 +1,4 @@
+[target.x86_64-pc-windows-gnu]
+rustflags = [
+  "-L", "D:\\snaptube_temp\\src-tauri\\libgcc_link"
+]
