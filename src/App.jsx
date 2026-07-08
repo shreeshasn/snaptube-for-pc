@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Play, AlertCircle, RefreshCw, Download, 
   History, FolderOpen, Trash2, X, Bell, 
-  ExternalLink, Sparkles, CheckCircle2, AlertTriangle, ArrowRight
+  ExternalLink, Sparkles, CheckCircle2, AlertTriangle, ArrowRight,
+  Settings
 } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -40,6 +41,27 @@ function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateVersion, setUpdateVersion] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem("snaptube_settings");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse settings:", e);
+      }
+    }
+    return {
+      provider: "relay", // "relay" | "direct"
+      apiKey: "",
+      relayUrl: "http://localhost:3000/resolve",
+      mockMode: false,
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem("snaptube_settings", JSON.stringify(settings));
+  }, [settings]);
 
   // Validate URL input changes
   useEffect(() => {
@@ -71,7 +93,8 @@ function App() {
   useEffect(() => {
     const silentCheck = async () => {
       try {
-        const response = await fetch("http://localhost:3000/version");
+        const baseRelay = settings.relayUrl ? settings.relayUrl.replace(/\/resolve\/?$/, "") : "http://localhost:3000";
+        const response = await fetch(`${baseRelay}/version`);
         if (response.ok) {
           const data = await response.json();
           if (data && data.version !== "1.0.0") {
@@ -86,7 +109,7 @@ function App() {
     // Give it a tiny delay on startup
     const timer = setTimeout(silentCheck, 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [settings.relayUrl]);
 
   const loadHistory = async () => {
     try {
@@ -106,7 +129,7 @@ function App() {
     setMetadata(null);
 
     try {
-      const data = await api.resolveVideo(url);
+      const data = await api.resolveVideo(url, settings);
       setMetadata(data);
     } catch (e) {
       setErrorMsg(e.toString());
@@ -144,7 +167,7 @@ function App() {
         setDownloadState("completed");
 
         const filename = `${metadata.title.replace(/[/\\?%*:|"<>.#]/g, "")}.${format.extension || "mp4"}`;
-        const mockPath = `C:\\Downloads\\${filename}`;
+        const mockPath = `Downloads/${filename}`;
         await api.addHistoryItem(
           metadata.title,
           format.quality,
@@ -325,6 +348,15 @@ function App() {
               {history.length}
             </span>
           )}
+        </button>
+
+        {/* Toggle settings button */}
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="fixed bottom-6 left-6 flex items-center space-x-2 bg-slate-900/60 border border-white/10 hover:bg-slate-800/80 hover:border-white/20 transition-all rounded-full p-3 px-5 shadow-xl backdrop-blur-md z-30 focus:outline-none group"
+        >
+          <Settings className="w-4 h-4 text-rose-400 group-hover:rotate-45 transition-transform duration-300" />
+          <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">Settings</span>
         </button>
 
         <AnimatePresence mode="wait">
@@ -668,6 +700,156 @@ function App() {
                     <Bell className="w-3 h-3" />
                     <span>SQLite Database</span>
                   </span>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* STATE 5: SETTINGS MODAL */}
+        <AnimatePresence>
+          {isSettingsOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSettingsOpen(false)}
+              className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6"
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 10 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 10 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-lg glass-panel rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl border border-white/10 relative overflow-hidden"
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center space-x-2 border-b border-white/10 pb-4">
+                  <Settings className="w-5 h-5 text-rose-400" />
+                  <h3 className="font-bold text-lg text-white">SnapTube Settings</h3>
+                </div>
+
+                <div className="space-y-5 text-left">
+                  {/* Mock Mode Toggle */}
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/5 border border-white/5">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-200">Local Mock Mode</label>
+                      <span className="text-xs text-slate-400">Offline demo resolution (uses open-source movie)</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSettings(prev => ({ ...prev, mockMode: !prev.mockMode }))}
+                      className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${
+                        settings.mockMode ? "bg-rose-500" : "bg-slate-800"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
+                          settings.mockMode ? "translate-x-6" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Provider Mode Selection */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">Resolution Provider</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, provider: "relay" }))}
+                        className={`p-3 rounded-xl border text-center font-bold text-xs uppercase tracking-wide transition-all focus:outline-none ${
+                          settings.provider === "relay"
+                            ? "bg-rose-500/20 border-rose-500 text-rose-400 shadow-lg shadow-rose-500/5"
+                            : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                        }`}
+                      >
+                        Relay Mode
+                      </button>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, provider: "direct" }))}
+                        className={`p-3 rounded-xl border text-center font-bold text-xs uppercase tracking-wide transition-all focus:outline-none ${
+                          settings.provider === "direct"
+                            ? "bg-rose-500/20 border-rose-500 text-rose-400 shadow-lg shadow-rose-500/5"
+                            : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                        }`}
+                      >
+                        Direct API (BYOK)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* API Key (only shown in Direct Mode) */}
+                  {settings.provider === "direct" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-2 overflow-hidden"
+                    >
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">RapidAPI Key</label>
+                      <input
+                        type="password"
+                        value={settings.apiKey}
+                        onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
+                        placeholder="Enter your youtube-video-fast-downloader key..."
+                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500/50 shadow-inner"
+                      />
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        Your key is stored only on this machine in your local webview storage.
+                      </span>
+                    </motion.div>
+                  )}
+
+                  {/* Relay URL (only shown in Relay Mode) */}
+                  {settings.provider === "relay" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-2 overflow-hidden"
+                    >
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">Relay Server URL</label>
+                      <input
+                        type="text"
+                        value={settings.relayUrl}
+                        onChange={(e) => setSettings(prev => ({ ...prev, relayUrl: e.target.value }))}
+                        placeholder="http://localhost:3000/resolve"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500/50 shadow-inner"
+                      />
+                      <span className="text-[10px] text-slate-500 block leading-tight">
+                        The thin server that holds the default API key and updates config.
+                      </span>
+                    </motion.div>
+                  )}
+                </div>
+
+                <div className="flex space-x-3 pt-4 border-t border-white/10">
+                  <button
+                    onClick={() => {
+                      setSettings({
+                        provider: "relay",
+                        apiKey: "",
+                        relayUrl: "http://localhost:3000/resolve",
+                        mockMode: false
+                      });
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-slate-950/60 border border-white/5 hover:bg-slate-900 text-slate-400 hover:text-slate-200 font-bold text-xs uppercase transition-all focus:outline-none"
+                  >
+                    Reset Defaults
+                  </button>
+                  <button
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white font-bold text-xs uppercase transition-all shadow-md focus:outline-none"
+                  >
+                    Save & Close
+                  </button>
                 </div>
               </motion.div>
             </motion.div>

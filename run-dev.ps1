@@ -1,11 +1,23 @@
 # run-dev.ps1 - SnapTube PC Development Starter Script
 
-# 1. Add TDM-GCC MinGW and Cargo to Path for this session
-$env:PATH = "$env:USERPROFILE\.cargo\bin;C:\Program Files (x86)\Embarcadero\Dev-Cpp\TDM-GCC-64\bin;$env:PATH"
+# 1. Add Cargo and standard compiler paths to Path if gcc is missing
+$hasGcc = Get-Command gcc -ErrorAction SilentlyContinue
+if (-not $hasGcc) {
+    $devCppPath = "C:\Program Files (x86)\Embarcadero\Dev-Cpp\TDM-GCC-64\bin"
+    if (Test-Path $devCppPath) {
+        $env:PATH = "$env:USERPROFILE\.cargo\bin;$devCppPath;$env:PATH"
+    } else {
+        Write-Host "[!] Warning: 'gcc' was not found in PATH and default Dev-Cpp directory is missing. Rust compilation may fail." -ForegroundColor Yellow
+        $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+    }
+} else {
+    $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+}
 
-# 2. Ensure Junction directory exists and is up to date
-$junctionPath = "D:\snaptube_temp"
-$projectPath = "D:\ENGINEERING\SOLO MAJOR PROJECT\Snaptube PC"
+# 2. Ensure Junction directory exists and is up to date (dynamically resolved)
+$projectPath = $PSScriptRoot
+$driveRoot = $projectPath.Substring(0, 3)
+$junctionPath = Join-Path $driveRoot "snaptube_temp"
 
 if (Test-Path $junctionPath) {
     # Remove existing junction safely without deleting target contents

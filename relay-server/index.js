@@ -21,6 +21,23 @@ app.get("/version", (req, res) => {
   });
 });
 
+// Utility function to extract videoId from YouTube URLs
+function extractVideoId(url) {
+  if (!url) return null;
+  const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|music\.youtube\.com)\/(watch\?v=|embed\/|v\/|shorts\/)?([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regex);
+  return match ? match[5] : null;
+}
+
+// Utility to format bytes to human-readable size
+function formatBytes(bytes) {
+  if (!bytes) return "Unknown Size";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
 // Resolve endpoint - requires signature validation and applies rate limiting
 app.post("/resolve", apiLimiter, validateSignature, async (req, res) => {
   const { url } = req.body;
@@ -78,51 +95,117 @@ app.post("/resolve", apiLimiter, validateSignature, async (req, res) => {
   // ==========================================
   // PRODUCTION MODE (Calls RapidAPI YouTube Resolver)
   // ==========================================
-  console.log(`[Relay Production] Resolving URL: ${url}`);
+  const videoId = extractVideoId(url);
+  if (!videoId) {
+    return res.status(400).json({ error: "Invalid YouTube URL format." });
+  }
+
+  console.log(`[Relay Production] Resolving URL: ${url} (Video ID: ${videoId})`);
 
   try {
     const rapidHost = process.env.RAPIDAPI_HOST || "youtube-video-fast-downloader-24-7.p.rapidapi.com";
-    const apiResponse = await fetch(`https://${rapidHost}/info?url=${encodeURIComponent(url)}`, {
-      method: "GET",
-      headers: {
-        "x-rapidapi-key": apiKey,
-        "x-rapidapi-host": rapidHost
-      }
-    });
+    
+    // Call both info and quality endpoints in parallel
+    const [infoResponse, qualityResponse] = await Promise.all([
+      fetch(`https://${rapidHost}/get-video-info/${videoId}`, {
+        method: "GET",
+        headers: {
+          "x-rapidapi-key": apiKey,
+          "x-rapidapi-host": rapidHost
+        }
+      }),
+      fetch(`https://${rapidHost}/get_available_quality/${videoId}`, {
+        method: "GET",
+        headers: {
+          "x-rapidapi-key": apiKey,
+          "x-rapidapi-host": rapidHost
+        }
+      })
+    ]);
 
-    if (!apiResponse.ok) {
-      const errBody = await apiResponse.text();
-      return res.status(apiResponse.status).json({ 
-        error: `RapidAPI error: ${apiResponse.statusText}. Details: ${errBody}` 
+    if (!infoResponse.ok) {
+      const errBody = await infoResponse.text();
+      return res.status(infoResponse.status).json({ 
+        error: `RapidAPI Video Info error: ${infoResponse.statusText}. Details: ${errBody}` 
       });
     }
 
-    const rawData = await apiResponse.json();
+    if (!qualityResponse.ok) {
+      const errBody = await qualityResponse.text();
+      return res.status(qualityResponse.status).json({ 
+        error: `RapidAPI Quality Options error: ${qualityResponse.statusText}. Details: ${errBody}` 
+      });
+    }
 
-    // Map the RapidAPI response into our clean, standard Snaptube contract
-    // We assume the typical RapidAPI downloader response structure
+    const infoData = await infoResponse.json();
+    const qualityData = await qualityResponse.json();
+
+    // Map thumbnail
+    let thumbnail = "https://placehold.co/640x360";
+    if (infoData.thumbnail && Array.isArray(infoData.thumbnail) && infoData.thumbnail.length > 0) {
+      thumbnail = infoData.thumbnail[infoData.thumbnail.length - 1].url || thumbnail;
+    }
+
+    // Format duration
+    let duration = "0:00";
+    if (infoData.lengthSeconds) {
+      const seconds = parseInt(infoData.lengthSeconds, 10);
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      duration = `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
     const mappedData = {
-      title: rawData.title || "YouTube Video",
-      thumbnail: rawData.thumbnail || rawData.thumb || "https://placehold.co/640x360",
-      duration: rawData.duration || "0:00",
-      author: rawData.author || rawData.channelName || "YouTube Creator",
+      title: infoData.title || "YouTube Video",
+      thumbnail: thumbnail,
+      duration: duration,
+      author: infoData.ownerChannelName || infoData.author || "YouTube Creator",
       formats: []
     };
 
-    if (rawData.formats && Array.isArray(rawData.formats)) {
-      mappedData.formats = rawData.formats.map(f => ({
-        quality: f.quality || f.resolution || "720p",
-        extension: f.extension || f.ext || "mp4",
-        size: f.size || f.fileSize || "Unknown Size",
-        url: f.url || f.downloadUrl
-      })).filter(f => f.url);
-    } else if (rawData.url) {
-      // Fallback simple payload if API returns a single format
-      mappedData.formats.push({
-        quality: rawData.quality || "720p",
-        extension: "mp4",
-        size: rawData.size || "Unknown Size",
-        url: rawData.url
+    if (Array.isArray(qualityData)) {
+      // Group/deduplicate and filter formats (highest bitrate for unique quality levels)
+      const filteredFormats = [];
+      const seenQualities = new Set();
+      const sorted = qualityData.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+
+      for (const f of sorted) {
+        if (f.type === "audio") {
+          if (!seenQualities.has("audio")) {
+            seenQualities.add("audio");
+            filteredFormats.push(f);
+          }
+        } else if (f.type === "video") {
+          const key = f.quality;
+          if (key && !seenQualities.has(key)) {
+            seenQualities.add(key);
+            filteredFormats.push(f);
+          }
+        }
+      }
+
+      // Determine client request address to format internal relay download URL
+      const protocol = req.protocol;
+      const clientHost = req.get("host");
+      const baseRelay = `${protocol}://${clientHost}`;
+
+      mappedData.formats = filteredFormats.map(f => {
+        let extension = "mp4";
+        let label = f.quality;
+        if (f.type === "audio") {
+          extension = f.mime && f.mime.includes("opus") ? "opus" : "m4a";
+          label = `Audio (${extension.toUpperCase()})`;
+        } else {
+          extension = f.mime && f.mime.includes("webm") ? "webm" : "mp4";
+          label = `${f.quality} (${extension.toUpperCase()})`;
+        }
+
+        return {
+          quality: label,
+          extension: extension,
+          size: formatBytes(f.size),
+          url: `${baseRelay}/download?videoId=${videoId}&type=${f.type}&quality=${f.id}`
+        };
       });
     }
 
@@ -135,6 +218,54 @@ app.post("/resolve", apiLimiter, validateSignature, async (req, res) => {
   } catch (error) {
     console.error("Relay processing exception:", error);
     res.status(500).json({ error: `Internal relay error: ${error.message}` });
+  }
+});
+
+// Download endpoint to generate download URL and redirect client
+app.get("/download", async (req, res) => {
+  const { videoId, type, quality } = req.query;
+
+  if (!videoId || !type || !quality) {
+    return res.status(400).send("Missing query parameters: videoId, type, and quality are required.");
+  }
+
+  const apiKey = process.env.RAPIDAPI_KEY;
+  if (!apiKey) {
+    const mockUrl = type === "audio" 
+      ? "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+      : "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    return res.redirect(mockUrl);
+  }
+
+  try {
+    const rapidHost = process.env.RAPIDAPI_HOST || "youtube-video-fast-downloader-24-7.p.rapidapi.com";
+    const endpoint = type === "audio" ? "download_audio" : "download_video";
+    
+    console.log(`[Relay Download] Fetching link for video: ${videoId}, quality: ${quality}, type: ${type}`);
+    
+    const apiResponse = await fetch(`https://${rapidHost}/${endpoint}/${videoId}?quality=${quality}`, {
+      method: "GET",
+      headers: {
+        "x-rapidapi-key": apiKey,
+        "x-rapidapi-host": rapidHost
+      }
+    });
+
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text();
+      return res.status(apiResponse.status).send(`RapidAPI download error: ${apiResponse.statusText}. Details: ${errText}`);
+    }
+
+    const data = await apiResponse.json();
+    if (data && data.file) {
+      console.log(`[Relay Download] Redirecting to: ${data.file}`);
+      return res.redirect(data.file);
+    }
+
+    res.status(422).send("No download file URL was returned from RapidAPI.");
+  } catch (error) {
+    console.error("Download redirection exception:", error);
+    res.status(500).send(`Internal relay download error: ${error.message}`);
   }
 });
 
