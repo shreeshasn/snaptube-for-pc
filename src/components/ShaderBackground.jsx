@@ -6,6 +6,9 @@ const FragmentShader = `
 uniform float u_time;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
+uniform vec3 u_color1;
+uniform vec3 u_color2;
+uniform vec3 u_color3;
 
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
@@ -45,9 +48,9 @@ void main() {
   uv.x += n1 * 0.06;
   uv.y += n2 * 0.06;
   
-  vec3 col1 = vec3(0.02, 0.04, 0.10);
-  vec3 col2 = vec3(0.06, 0.01, 0.04);
-  vec3 col3 = vec3(0.96, 0.25, 0.38) * 0.18;
+  vec3 col1 = u_color1;
+  vec3 col2 = u_color2;
+  vec3 col3 = u_color3 * 0.18;
   
   float mix_factor = snoise(uv * 1.8 + vec2(u_time * 0.015, u_time * 0.01));
   vec3 color = mix(col1, col2, mix_factor * 0.5 + 0.5);
@@ -55,7 +58,7 @@ void main() {
   float dist_to_mouse = distance(gl_FragCoord.xy / u_resolution.y, vec2(u_mouse.x * u_resolution.x / u_resolution.y, u_mouse.y));
   float mouse_glow = smoothstep(0.35, 0.0, dist_to_mouse) * 0.04;
   
-  color += col3 * (n2 * 0.5 + 0.5) + vec3(0.96, 0.25, 0.38) * mouse_glow;
+  color += col3 * (n2 * 0.5 + 0.5) + u_color3 * mouse_glow;
   
   gl_FragColor = vec4(color, 1.0);
 }
@@ -67,19 +70,46 @@ void main() {
 }
 `;
 
-function ShaderPlane() {
+function ShaderPlane({ theme }) {
   const meshRef = useRef();
   const { size } = useThree();
   
   const uniforms = useMemo(() => ({
     u_time: { value: 0 },
     u_resolution: { value: new THREE.Vector2(size.width, size.height) },
-    u_mouse: { value: new THREE.Vector2(0.5, 0.5) }
+    u_mouse: { value: new THREE.Vector2(0.5, 0.5) },
+    u_color1: { value: new THREE.Color("#050a1a") },
+    u_color2: { value: new THREE.Color("#0f030a") },
+    u_color3: { value: new THREE.Color("#f54060") }
   }), []);
 
   useEffect(() => {
     uniforms.u_resolution.value.set(size.width, size.height);
   }, [size, uniforms]);
+
+  useEffect(() => {
+    let c1 = "#050a1a";
+    let c2 = "#0f030a";
+    let c3 = "#f54060";
+
+    if (theme === "emerald") {
+      c1 = "#020d08";
+      c2 = "#030514";
+      c3 = "#1ae666";
+    } else if (theme === "aurora") {
+      c1 = "#030a14";
+      c2 = "#0d030f";
+      c3 = "#26b3d9";
+    } else if (theme === "solar") {
+      c1 = "#0d0502";
+      c2 = "#050505";
+      c3 = "#f28026";
+    }
+
+    uniforms.u_color1.value.set(c1);
+    uniforms.u_color2.value.set(c2);
+    uniforms.u_color3.value.set(c3);
+  }, [theme, uniforms]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -111,11 +141,11 @@ function ShaderPlane() {
   );
 }
 
-export default function ShaderBackground() {
+export default function ShaderBackground({ theme = "rose" }) {
   return (
     <div className="fixed inset-0 -z-10 w-full h-full bg-slate-950 pointer-events-none">
       <Canvas camera={{ position: [0, 0, 1] }} dpr={[1, 2]}>
-        <ShaderPlane />
+        <ShaderPlane theme={theme} />
       </Canvas>
     </div>
   );

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "SnapTube",
+  "productName": "NovaTube",
   "version": "1.0.0",
-  "identifier": "com.snaptube.app",
+  "identifier": "com.novatube.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "SnapTube",
+        "title": "NovaTube",
         "width": 1024,
         "height": 720,
         "minWidth": 800,

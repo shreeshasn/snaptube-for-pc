@@ -26,7 +26,7 @@ export const api = {
       await new Promise(resolve => setTimeout(resolve, 800));
       return {
         title: "Big Buck Bunny - 1080p Open Source Movie",
-        thumbnail: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_Buck_Bunny_Narrated_Thumbnail.jpg/640px-Big_Buck_Bunny_Narrated_Thumbnail.jpg",
+        thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=640",
         duration: "9:56",
         author: "Blender Foundation",
         formats: [
@@ -69,7 +69,7 @@ export const api = {
           throw new Error("Invalid YouTube URL format.");
         }
 
-        const host = "youtube-video-fast-downloader-24-7.p.rapidapi.com";
+        const host = settings.rapidHost || "youtube-video-fast-downloader-24-7.p.rapidapi.com";
         const [infoRes, qualityRes] = await Promise.all([
           fetch(`https://${host}/get-video-info/${videoId}`, {
             method: "GET",
@@ -184,7 +184,8 @@ export const api = {
       url,
       provider: settings.provider || "relay",
       apiKey: settings.apiKey || "",
-      relayUrl: settings.relayUrl || ""
+      relayUrl: settings.relayUrl || "",
+      rapidHost: settings.rapidHost || "youtube-video-fast-downloader-24-7.p.rapidapi.com"
     });
   },
 

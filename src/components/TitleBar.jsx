@@ -50,14 +50,16 @@ export default function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className="flex items-center justify-between h-11 bg-slate-950/60 border-b border-white/5 backdrop-blur-md text-slate-300 select-none fixed top-0 left-0 right-0 z-50 px-4"
+      className="flex items-center justify-between h-11 bg-slate-950/60 border-b border-white/5 backdrop-blur-md text-slate-300 select-none fixed top-0 left-0 right-0 z-[100] px-4"
     >
       <div className="flex items-center space-x-2 pointer-events-none">
-        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-tr from-rose-500 to-rose-600 text-white shadow-md">
-          <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-tr from-rose-500 via-pink-500 to-orange-500 text-white shadow-md">
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 5.14v14l11-7-11-7z"/>
+          </svg>
         </div>
         <span className="font-sans font-bold tracking-wide text-sm bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-          SnapTube PC
+          NovaTube PC
         </span>
       </div>
       

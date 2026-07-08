@@ -44,19 +44,22 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem("snaptube_settings");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse settings:", e);
-      }
-    }
-    return {
+    const defaults = {
       provider: "relay", // "relay" | "direct"
       apiKey: "",
       relayUrl: "http://localhost:3000/resolve",
       mockMode: false,
+      theme: "rose",
+      rapidHost: "youtube-video-fast-downloader-24-7.p.rapidapi.com",
     };
+    if (saved) {
+      try {
+        return { ...defaults, ...JSON.parse(saved) };
+      } catch (e) {
+        console.error("Failed to parse settings:", e);
+      }
+    }
+    return defaults;
   });
 
   useEffect(() => {
@@ -297,7 +300,7 @@ function App() {
 
   return (
     <div className="relative min-h-screen flex flex-col pt-11 text-slate-100 font-sans">
-      <ShaderBackground />
+      <ShaderBackground theme={settings.theme} />
       <TitleBar />
 
       {/* Auto update banner */}
@@ -312,7 +315,7 @@ function App() {
             <div className="flex items-center space-x-2.5">
               <Sparkles className="w-5 h-5 text-rose-400 animate-pulse" />
               <p className="text-sm font-medium text-slate-200">
-                A new version of SnapTube <span className="text-white font-bold">{updateVersion}</span> is available!
+                A new version of NovaTube <span className="text-white font-bold">{updateVersion}</span> is available!
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -619,7 +622,7 @@ function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsHistoryOpen(false)}
-              className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end"
+              className="fixed inset-0 z-[90] bg-slate-950/60 backdrop-blur-sm flex justify-end"
             >
               <motion.div
                 initial={{ x: "100%" }}
@@ -627,7 +630,7 @@ function App() {
                 exit={{ x: "100%" }}
                 transition={{ type: "tween", duration: 0.3 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md h-full bg-slate-900/90 border-l border-white/10 backdrop-blur-xl p-6 shadow-2xl flex flex-col justify-between"
+                className="w-full max-w-md h-full bg-slate-900/90 border-l border-white/10 backdrop-blur-xl p-6 pt-16 shadow-2xl flex flex-col justify-between"
               >
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
@@ -733,7 +736,7 @@ function App() {
 
                 <div className="flex items-center space-x-2 border-b border-white/10 pb-4">
                   <Settings className="w-5 h-5 text-rose-400" />
-                  <h3 className="font-bold text-lg text-white">SnapTube Settings</h3>
+                  <h3 className="font-bold text-lg text-white">NovaTube Settings</h3>
                 </div>
 
                 <div className="space-y-5 text-left">
@@ -756,6 +759,32 @@ function App() {
                         }`}
                       />
                     </button>
+                  </div>
+
+                  {/* Theme Selector */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">Background Theme</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { id: "rose", name: "Rose", color: "from-rose-500 to-rose-600 border-rose-500" },
+                        { id: "emerald", name: "Emerald", color: "from-emerald-500 to-emerald-600 border-emerald-500" },
+                        { id: "aurora", name: "Aurora", color: "from-cyan-500 to-blue-600 border-cyan-500" },
+                        { id: "solar", name: "Solar", color: "from-orange-500 to-yellow-600 border-orange-500" }
+                      ].map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setSettings(prev => ({ ...prev, theme: t.id }))}
+                          className={`p-2 rounded-xl border flex flex-col items-center justify-center space-y-1.5 focus:outline-none transition-all ${
+                            settings.theme === t.id
+                              ? "bg-white/10 border-white/40 shadow-lg"
+                              : "bg-white/5 border-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className={`w-4 h-4 rounded-full bg-gradient-to-tr ${t.color}`} />
+                          <span className="text-[10px] font-bold text-slate-300">{t.name}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Provider Mode Selection */}
@@ -807,6 +836,25 @@ function App() {
                     </motion.div>
                   )}
 
+                  {/* RapidAPI Host (only shown in Direct Mode) */}
+                  {settings.provider === "direct" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-2 overflow-hidden"
+                    >
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">RapidAPI Host</label>
+                      <input
+                        type="text"
+                        value={settings.rapidHost}
+                        onChange={(e) => setSettings(prev => ({ ...prev, rapidHost: e.target.value }))}
+                        placeholder="youtube-video-fast-downloader-24-7.p.rapidapi.com"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500/50 shadow-inner"
+                      />
+                    </motion.div>
+                  )}
+
                   {/* Relay URL (only shown in Relay Mode) */}
                   {settings.provider === "relay" && (
                     <motion.div
@@ -837,7 +885,9 @@ function App() {
                         provider: "relay",
                         apiKey: "",
                         relayUrl: "http://localhost:3000/resolve",
-                        mockMode: false
+                        mockMode: false,
+                        theme: "rose",
+                        rapidHost: "youtube-video-fast-downloader-24-7.p.rapidapi.com"
                       });
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-slate-950/60 border border-white/5 hover:bg-slate-900 text-slate-400 hover:text-slate-200 font-bold text-xs uppercase transition-all focus:outline-none"

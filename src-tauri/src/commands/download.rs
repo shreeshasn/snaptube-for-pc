@@ -75,6 +75,7 @@ pub async fn resolve_video(
     provider: String,
     api_key: String,
     relay_url: String,
+    rapid_host: String,
 ) -> Result<serde_json::Value, String> {
     let client = Client::new();
     
@@ -86,14 +87,13 @@ pub async fn resolve_video(
         let video_id = extract_video_id(&url)
             .ok_or_else(|| "Invalid YouTube URL format.".to_string())?;
 
-        let rapid_host = "youtube-video-fast-downloader-24-7.p.rapidapi.com";
         let info_endpoint = format!("https://{}/get-video-info/{}", rapid_host, video_id);
         let quality_endpoint = format!("https://{}/get_available_quality/{}", rapid_host, video_id);
 
         // Fetch info
         let info_response = client.get(&info_endpoint)
             .header("x-rapidapi-key", &api_key)
-            .header("x-rapidapi-host", rapid_host)
+            .header("x-rapidapi-host", &rapid_host)
             .send()
             .await
             .map_err(|e| format!("Failed to call RapidAPI Video Info: {}", e))?;
@@ -111,7 +111,7 @@ pub async fn resolve_video(
         // Fetch quality
         let quality_response = client.get(&quality_endpoint)
             .header("x-rapidapi-key", &api_key)
-            .header("x-rapidapi-host", rapid_host)
+            .header("x-rapidapi-host", &rapid_host)
             .send()
             .await
             .map_err(|e| format!("Failed to call RapidAPI Quality Options: {}", e))?;
@@ -276,7 +276,7 @@ pub async fn download_file(
     let client = Client::new();
     let mut download_url = url.clone();
     
-    if url.contains("youtube-video-fast-downloader-24-7.p.rapidapi.com") {
+    if url.contains("apiKey=") {
         // Extract apiKey from query param
         let mut api_key = String::new();
         if let Some(key_pos) = url.find("apiKey=") {
@@ -290,6 +290,18 @@ pub async fn download_file(
             return Err("Missing apiKey query parameter for RapidAPI download.".to_string());
         }
 
+        // Extract host name from the URL dynamically
+        let mut rapid_host = String::new();
+        if let Some(host_start) = url.find("://") {
+            let rest = &url[(host_start + 3)..];
+            let end = rest.find('/').unwrap_or(rest.len());
+            rapid_host = rest[..end].to_string();
+        }
+
+        if rapid_host.is_empty() {
+            return Err("Could not parse host name from download URL.".to_string());
+        }
+
         // Clean up the URL by removing apiKey from the query string
         let clean_url = if let Some(pos) = url.find("&apiKey=") {
             url[..pos].to_string()
@@ -299,10 +311,9 @@ pub async fn download_file(
             url.clone()
         };
 
-        let rapid_host = "youtube-video-fast-downloader-24-7.p.rapidapi.com";
         let api_res = client.get(&clean_url)
             .header("x-rapidapi-key", &api_key)
-            .header("x-rapidapi-host", rapid_host)
+            .header("x-rapidapi-host", &rapid_host)
             .send()
             .await
             .map_err(|e| format!("Failed to call RapidAPI download endpoint: {}", e))?;

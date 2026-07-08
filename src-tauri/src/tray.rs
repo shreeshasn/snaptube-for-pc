@@ -3,7 +3,7 @@ use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), tauri::Error> {
-    let open_item = MenuItem::with_id(app, "open", "Open SnapTube", true, None::<&str>)?;
+    let open_item = MenuItem::with_id(app, "open", "Open NovaTube", true, None::<&str>)?;
     let check_update = MenuItem::with_id(app, "check_update", "Check for Updates", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 

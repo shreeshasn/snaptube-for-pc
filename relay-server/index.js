@@ -60,7 +60,7 @@ app.post("/resolve", apiLimiter, validateSignature, async (req, res) => {
     // Return beautiful Blender open source demo content with real high-speed download links
     return res.json({
       title: "Big Buck Bunny - 1080p Open Source Movie",
-      thumbnail: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_Buck_Bunny_Narrated_Thumbnail.jpg/640px-Big_Buck_Bunny_Narrated_Thumbnail.jpg",
+      thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=640",
       duration: "9:56",
       author: "Blender Foundation",
       formats: [
