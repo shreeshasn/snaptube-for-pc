@@ -51,6 +51,29 @@
 
 ---
 
+### [+] Bring Your Own Key (BYOK)
+
+To fully utilize the YouTube search and download capabilities without mock data, you must provide your own API key. You can do this in two ways:
+
+**Option 1: Directly in the Application (Recommended for End Users)**
+1. Open the Snaptube PC application.
+2. Navigate to the **Settings** menu.
+3. Paste your RapidAPI Key into the provided API Key field and save.
+
+**Option 2: Using the Local Relay Server (For Developers)**
+1. Create an account on [RapidAPI](https://rapidapi.com/).
+2. Subscribe to the [YouTube Video Fast Downloader 24/7 API](https://rapidapi.com/search/youtube-video-fast-downloader-24-7).
+3. Copy your unique `x-rapidapi-key`.
+4. Create a `.env` file in the `relay-server` directory.
+5. Add your key to the file:
+   ```env
+   RAPIDAPI_KEY=your_api_key_here
+   ```
+
+*Note: If the key is not provided, the app/relay server will run in **Mock Mode**, returning sample data for development purposes.*
+
+---
+
 ### [+] System Architecture
 
 The client front-end communicates with the native OS layer outside the webview sandbox using Tauri's inter-process communication (IPC) bridges:
