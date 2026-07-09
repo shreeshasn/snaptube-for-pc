@@ -77,7 +77,10 @@ pub async fn resolve_video(
     relay_url: String,
     rapid_host: String,
 ) -> Result<serde_json::Value, String> {
-    let client = Client::new();
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| format!("Failed to build reqwest client: {}", e))?;
     
     if provider == "direct" {
         if api_key.is_empty() {
@@ -247,7 +250,7 @@ pub async fn resolve_video(
         };
         
         let response = client.post(endpoint)
-            .header("x-snaptube-signature", "SnapTube-Desktop-Client-Token-2026")
+            .header("x-novatube-signature", "NovaTube-Desktop-Client-Token-2026")
             .json(&serde_json::json!({ "url": url }))
             .send()
             .await
@@ -273,7 +276,19 @@ pub async fn download_file(
     url: String,
     path: String,
 ) -> Result<String, String> {
-    let client = Client::new();
+    use reqwest::header;
+    let mut headers = header::HeaderMap::new();
+    headers.insert(header::REFERER, header::HeaderValue::from_static("https://www.youtube.com/"));
+    headers.insert(header::ORIGIN, header::HeaderValue::from_static("https://www.youtube.com"));
+    headers.insert(header::ACCEPT, header::HeaderValue::from_static("*/*"));
+    headers.insert(header::ACCEPT_LANGUAGE, header::HeaderValue::from_static("en-US,en;q=0.9"));
+
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .default_headers(headers)
+        .timeout(std::time::Duration::from_secs(60))
+        .build()
+        .map_err(|e| format!("Failed to build reqwest client: {}", e))?;
     let mut download_url = url.clone();
     
     if url.contains("apiKey=") {
@@ -328,20 +343,46 @@ pub async fn download_file(
             .await
             .map_err(|e| format!("Failed to parse RapidAPI download JSON response: {}", e))?;
 
-        if let Some(file_url) = json_res["file"].as_str() {
+        let _ = std::fs::write("rapidapi_log.json", serde_json::to_string_pretty(&json_res).unwrap_or_default());
+
+        let file_url_opt = json_res["url"].as_str()
+            .or_else(|| json_res["link"].as_str())
+            .or_else(|| json_res["file"].as_str());
+
+        if let Some(file_url) = file_url_opt {
             download_url = file_url.to_string();
         } else {
-            return Err("RapidAPI download response did not contain 'file' URL.".to_string());
+            return Err(format!("RapidAPI download response did not contain 'url', 'link' or 'file'. Response: {}", json_res));
         }
     }
 
-    let response = client.get(&download_url)
+    let mut response = client.get(&download_url)
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Failed to connect to {}: {}", download_url, e))?;
+
+    let mut retries = 0;
+    while response.status() == reqwest::StatusCode::NOT_FOUND && retries < 30 {
+        use tauri::Emitter;
+        let _ = window.emit("download-progress", ProgressPayload {
+            percentage: 0.0,
+            speed_kbps: 0.0,
+            downloaded_bytes: 0,
+            total_bytes: 0,
+            status: format!("Processing 1080p on remote server... ({}s)", retries * 3),
+        });
+        
+        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+        response = client.get(&download_url)
+            .send()
+            .await
+            .map_err(|e| format!("Failed to connect to {}: {}", download_url, e))?;
+        retries += 1;
+    }
 
     if !response.status().is_success() {
-        return Err(format!("Server returned status: {}", response.status()));
+        let debug_json = if url.contains("apiKey=") { " (Check RapidAPI Dashboard for rate limits or processing delays)" } else { "" };
+        return Err(format!("Server returned status {} for URL: {}{}", response.status(), download_url, debug_json));
     }
 
     let total_size = response.content_length().unwrap_or(0);

@@ -168,7 +168,7 @@ export const api = {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-snaptube-signature": "SnapTube-Desktop-Client-Token-2026"
+            "x-novatube-signature": "NovaTube-Desktop-Client-Token-2026"
           },
           body: JSON.stringify({ url })
         });
@@ -198,7 +198,7 @@ export const api = {
 
   async getHistory() {
     if (!isTauri) {
-      const stored = localStorage.getItem("snaptube_mock_history");
+      const stored = localStorage.getItem("novatube_mock_history");
       return stored ? JSON.parse(stored) : [];
     }
     return await invoke("get_history_items");
@@ -206,7 +206,7 @@ export const api = {
 
   async addHistoryItem(title, resolution, size, filePath) {
     if (!isTauri) {
-      const stored = localStorage.getItem("snaptube_mock_history");
+      const stored = localStorage.getItem("novatube_mock_history");
       const items = stored ? JSON.parse(stored) : [];
       const newItem = {
         id: Date.now(),
@@ -217,7 +217,7 @@ export const api = {
         timestamp: Math.floor(Date.now() / 1000)
       };
       items.unshift(newItem);
-      localStorage.setItem("snaptube_mock_history", JSON.stringify(items));
+      localStorage.setItem("novatube_mock_history", JSON.stringify(items));
       return newItem;
     }
     return await invoke("add_history_item", { title, resolution, size, filePath });
@@ -225,10 +225,10 @@ export const api = {
 
   async deleteHistoryItem(id) {
     if (!isTauri) {
-      const stored = localStorage.getItem("snaptube_mock_history");
+      const stored = localStorage.getItem("novatube_mock_history");
       if (stored) {
         const items = JSON.parse(stored).filter(item => item.id !== id);
-        localStorage.setItem("snaptube_mock_history", JSON.stringify(items));
+        localStorage.setItem("novatube_mock_history", JSON.stringify(items));
       }
       return "deleted";
     }

@@ -1,7 +1,7 @@
 {
-  "name": "snaptube-relay-server",
+  "name": "novatube-relay-server",
   "version": "1.0.0",
-  "description": "Thin cloud relay for SnapTube PC desktop clients",
+  "description": "Thin cloud relay for NovaTube PC desktop clients",
   "main": "index.js",
   "type": "module",
   "scripts": {

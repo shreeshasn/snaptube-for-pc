@@ -1,0 +1,37 @@
+chore(brand): full rebrand to NovaTube, dynamic theming, and documentation overhaul
+
+This commit finalizes the complete transition from the legacy "SnapTube PC" 
+identity to the new "NovaTube" brand across the entire stack, including the 
+React frontend, Rust Tauri backend, and Node.js cloud relay server.
+
+Major Changes:
+- **Brand Identity**: Replaced all occurrences of "SnapTube" with "NovaTube" 
+  in UI text, dialogs, loaders, localStorage keys, and window titles.
+- **Dynamic Theming System**: Extracted hardcoded UI colors (e.g., `rose-500`) 
+  into a dynamic CSS variable system (`data-theme`) bound to Tailwind's 
+  `primary` color palette. The UI now seamlessly reacts to user theme 
+  preferences (Rose, Emerald, Aurora, Solar).
+- **Shader Refinement**: Overhauled the WebGL `ShaderBackground.jsx` for the 
+  "Solar" theme, balancing the base colors to a rich, warm ambient orange 
+  instead of an overwhelmingly bright or nearly black void.
+- **TitleBar Fixes**: Updated the custom `TitleBar.jsx` logo gradient and close 
+  button hover states to map correctly to the dynamic `primary-*` variables.
+- **Relay Server & APIs**: Renamed the Node.js relay server package and 
+  updated the request validation middleware to strictly require the new 
+  `x-novatube-signature` header and `NovaTube-Desktop-Client-Token-2026`.
+- **Documentation**: 
+  - Redesigned `README.md` with an aesthetic ASCII header, dynamic badges, 
+    and collapsed HTML architecture diagrams.
+  - Added a `GUIDE_BYOK.md` (Bring Your Own Key) for developer setup.
+  - Implemented core community standards (`LICENSE`, `SECURITY.md`, 
+    `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`).
+- **Build Configurations**: 
+  - Updated `config.toml` and `run-dev.ps1` to use `novatube_temp` for long 
+    path Rust compilation workarounds.
+  - Integrated custom NSIS installer uninstaller icons (`tauri.conf.json`).
+  - Bumped project root version to `1.0.0` and renamed package to `novatube-pc`.
+  - Cleaned up heavy Rust compilation caches and unlinked temporary junctions.
+- **Installers**: Successfully built and decoupled final `NovaTube_1.0.0` 
+  `.exe` and `.msi` installers to the root `installer/` directory.
+
+Resolves all rebranding and theming discrepancies for the v1.0.0 release.

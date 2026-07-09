@@ -1,11 +1,11 @@
 # Software Requirements Specification (SRS) v3.0
-# SnapTube PC — Native Desktop Application (Windows / macOS / Linux)
+# NovaTube PC — Native Desktop Application (Windows / macOS / Linux)
 
 ---
 
 ## 0. Revision Notes (v2 → v3)
 
-This version converts SnapTube from a hosted web app into **installable desktop software**. The core UI/UX vision from v2 (shader background, motion system) carries over unchanged — it now runs inside a native window instead of a browser tab.
+This version converts NovaTube from a hosted web app into **installable desktop software**. The core UI/UX vision from v2 (shader background, motion system) carries over unchanged — it now runs inside a native window instead of a browser tab.
 
 | Area | v2 (Web App) | v3 (Desktop Software) |
 |---|---|---|
@@ -22,7 +22,7 @@ This version converts SnapTube from a hosted web app into **installable desktop 
 ## 1. Project Overview
 
 **1.1 Purpose**
-To ship SnapTube as a downloadable, installable desktop application for Windows, macOS, and Linux — not a website. Users download an installer once, and the app runs as a standalone program with its own icon, dock/taskbar presence, and native window chrome.
+To ship NovaTube as a downloadable, installable desktop application for Windows, macOS, and Linux — not a website. Users download an installer once, and the app runs as a standalone program with its own icon, dock/taskbar presence, and native window chrome.
 
 **1.2 Why Tauri over Electron**
 Recommended: **Tauri**, not Electron.
@@ -125,7 +125,7 @@ SEC-1, SEC-3, PER-2, PER-3, PERF-1, PERF-2, ACC-1 from v2 carry over. Changes:
 ## 8. Directory Structure
 
 ```text
-snaptube-desktop/
+novatube-desktop/
 ├── src/                        # React UI (shared with v2's client/src)
 │   ├── App.jsx
 │   ├── main.jsx

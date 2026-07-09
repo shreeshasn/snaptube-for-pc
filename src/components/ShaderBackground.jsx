@@ -101,9 +101,9 @@ function ShaderPlane({ theme }) {
       c2 = "#0d030f";
       c3 = "#26b3d9";
     } else if (theme === "solar") {
-      c1 = "#0d0502";
-      c2 = "#050505";
-      c3 = "#f28026";
+      c1 = "#3a1204"; // Dark rich orange/brown
+      c2 = "#5a1a06"; // Medium burnt orange
+      c3 = "#f97316"; // Bright orange highlights
     }
 
     uniforms.u_color1.value.set(c1);

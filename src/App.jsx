@@ -43,7 +43,7 @@ function App() {
   const [updateVersion, setUpdateVersion] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem("snaptube_settings");
+    const saved = localStorage.getItem("novatube_settings");
     const defaults = {
       provider: "relay", // "relay" | "direct"
       apiKey: "",
@@ -63,7 +63,8 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem("snaptube_settings", JSON.stringify(settings));
+    localStorage.setItem("novatube_settings", JSON.stringify(settings));
+    document.body.setAttribute("data-theme", settings.theme);
   }, [settings]);
 
   // Validate URL input changes
@@ -143,6 +144,7 @@ function App() {
 
   const triggerDownload = async (format) => {
     if (!metadata) return;
+    setErrorMsg("");
 
     if (!isTauri) {
       setDownloadState("downloading");
@@ -310,10 +312,10 @@ function App() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-12 left-4 right-4 z-40 bg-rose-500/20 border border-rose-500/30 backdrop-blur-lg rounded-xl p-3 px-4 flex items-center justify-between shadow-2xl"
+            className="fixed top-12 left-4 right-4 z-40 bg-primary-500/20 border border-primary-500/30 backdrop-blur-lg rounded-xl p-3 px-4 flex items-center justify-between shadow-2xl"
           >
             <div className="flex items-center space-x-2.5">
-              <Sparkles className="w-5 h-5 text-rose-400 animate-pulse" />
+              <Sparkles className="w-5 h-5 text-primary-400 animate-pulse" />
               <p className="text-sm font-medium text-slate-200">
                 A new version of NovaTube <span className="text-white font-bold">{updateVersion}</span> is available!
               </p>
@@ -321,7 +323,7 @@ function App() {
             <div className="flex items-center space-x-3">
               <button 
                 onClick={() => setUpdateAvailable(false)}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-all shadow-md focus:outline-none"
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-all shadow-md focus:outline-none"
               >
                 Restart to Update
               </button>
@@ -344,10 +346,10 @@ function App() {
           onClick={() => setIsHistoryOpen(true)}
           className="fixed bottom-6 right-6 flex items-center space-x-2 bg-slate-900/60 border border-white/10 hover:bg-slate-800/80 hover:border-white/20 transition-all rounded-full p-3 px-5 shadow-xl backdrop-blur-md z-30 focus:outline-none group"
         >
-          <History className="w-4 h-4 text-rose-400 group-hover:rotate-12 transition-transform" />
+          <History className="w-4 h-4 text-primary-400 group-hover:rotate-12 transition-transform" />
           <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">History</span>
           {history.length > 0 && (
-            <span className="w-4 h-4 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center">
+            <span className="w-4 h-4 rounded-full bg-primary-500 text-[10px] font-bold text-white flex items-center justify-center">
               {history.length}
             </span>
           )}
@@ -358,7 +360,7 @@ function App() {
           onClick={() => setIsSettingsOpen(true)}
           className="fixed bottom-6 left-6 flex items-center space-x-2 bg-slate-900/60 border border-white/10 hover:bg-slate-800/80 hover:border-white/20 transition-all rounded-full p-3 px-5 shadow-xl backdrop-blur-md z-30 focus:outline-none group"
         >
-          <Settings className="w-4 h-4 text-rose-400 group-hover:rotate-45 transition-transform duration-300" />
+          <Settings className="w-4 h-4 text-primary-400 group-hover:rotate-45 transition-transform duration-300" />
           <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">Settings</span>
         </button>
 
@@ -374,7 +376,7 @@ function App() {
               className="w-full max-w-2xl text-center space-y-8"
             >
               <div className="space-y-3">
-                <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-rose-400 bg-clip-text text-transparent">
+                <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-primary-400 bg-clip-text text-transparent">
                   Download Anything. Instantly.
                 </h2>
                 <p className="text-slate-400 text-sm sm:text-base font-light tracking-wide max-w-md mx-auto">
@@ -384,7 +386,7 @@ function App() {
 
               <form onSubmit={handleResolve} className="relative w-full max-w-xl mx-auto group">
                 <div className="relative flex items-center">
-                  <div className="absolute left-4 text-slate-400 pointer-events-none group-focus-within:text-rose-400 transition-colors">
+                  <div className="absolute left-4 text-slate-400 pointer-events-none group-focus-within:text-primary-400 transition-colors">
                     <Search className="w-5 h-5" />
                   </div>
                   <input
@@ -401,7 +403,7 @@ function App() {
                       disabled={!isValid || isLoading}
                       className={`h-10 px-5 rounded-xl font-bold text-xs tracking-wider uppercase flex items-center space-x-1.5 shadow-lg transition-all ${
                         isValid && !isLoading
-                          ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:from-rose-400 hover:to-rose-500 hover:shadow-rose-500/20 active:scale-95"
+                          ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-400 hover:to-primary-500 hover:shadow-primary-500/20 active:scale-95"
                           : "bg-slate-800/40 text-slate-500 cursor-not-allowed border border-white/5"
                       }`}
                     >
@@ -422,7 +424,7 @@ function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-center space-x-2 text-rose-400 text-xs font-semibold max-w-md mx-auto bg-rose-950/20 border border-rose-500/10 p-2.5 rounded-lg backdrop-blur-md select-text"
+                  className="flex items-center justify-center space-x-2 text-primary-400 text-xs font-semibold max-w-md mx-auto bg-primary-950/20 border border-primary-500/10 p-2.5 rounded-lg backdrop-blur-md select-text"
                 >
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
@@ -470,7 +472,7 @@ function App() {
                     {metadata.title}
                   </h3>
                   <div className="flex items-center space-x-2 mt-2">
-                    <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/10">
+                    <span className="text-xs font-semibold text-primary-400 bg-primary-500/10 px-2.5 py-0.5 rounded-full border border-primary-500/10">
                       {metadata.author || "YouTube Creator"}
                     </span>
                     <span className="text-xs font-medium text-slate-400">
@@ -503,7 +505,7 @@ function App() {
                         <button
                           onClick={() => triggerDownload(format)}
                           disabled={downloadState !== null}
-                          className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 font-bold text-xs uppercase tracking-wide hover:bg-rose-600 hover:border-rose-600 hover:text-white transition-all shadow-md focus:outline-none"
+                          className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-200 font-bold text-xs uppercase tracking-wide hover:bg-primary-600 hover:border-primary-600 hover:text-white transition-all shadow-md focus:outline-none"
                         >
                           <Download className="w-3.5 h-3.5" />
                           <span>Get</span>
@@ -534,8 +536,8 @@ function App() {
               >
                 {downloadState === "dialog" && (
                   <div className="space-y-4">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center animate-pulse">
-                      <FolderOpen className="w-5 h-5 text-rose-400" />
+                    <div className="mx-auto w-12 h-12 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center animate-pulse">
+                      <FolderOpen className="w-5 h-5 text-primary-400" />
                     </div>
                     <div>
                       <h4 className="font-bold text-lg text-white">Opening Save Dialog...</h4>
@@ -548,7 +550,7 @@ function App() {
                   <div className="space-y-5">
                     <div className="space-y-1">
                       <h4 className="font-bold text-lg text-white">Downloading File</h4>
-                      <p className="text-xs text-rose-400 font-medium">Please do not close SnapTube</p>
+                      <p className="text-xs text-primary-400 font-medium">Please do not close NovaTube</p>
                     </div>
 
                     <div className="space-y-2">
@@ -558,7 +560,7 @@ function App() {
                       </div>
                       <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-white/5 p-0.5">
                         <div
-                          className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-full transition-all duration-300 shadow-md"
+                          className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all duration-300 shadow-md"
                           style={{ width: `${progress.percentage}%` }}
                         />
                       </div>
@@ -592,17 +594,24 @@ function App() {
 
                 {downloadState === "failed" && (
                   <div className="space-y-4">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-                      <AlertTriangle className="w-6 h-6 text-rose-400" />
+                    <div className="mx-auto w-12 h-12 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6 text-primary-400" />
                     </div>
                     <div>
                       <h4 className="font-bold text-lg text-white">Download Failed</h4>
                       <p className="text-xs text-slate-400 mt-1">Something went wrong during the transfer.</p>
+                      {errorMsg && (
+                        <div className="mt-2.5 p-2 bg-primary-950/20 border border-primary-500/15 rounded-xl text-[10px] text-primary-400/90 font-mono text-left break-all select-text max-h-24 overflow-y-auto">
+                          {errorMsg}
+                        </div>
+                      )}
                     </div>
                     <div className="flex space-x-3 pt-2">
                       <button
-                        onClick={() => setDownloadState(null)}
-                        className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs uppercase transition-all shadow-md focus:outline-none"
+                        onClick={() => {
+                          setDownloadState(null);
+                        }}
+                        className="flex-1 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-400 text-white font-bold text-xs uppercase transition-all shadow-md focus:outline-none"
                       >
                         Retry
                       </button>
@@ -635,7 +644,7 @@ function App() {
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
                     <div className="flex items-center space-x-2">
-                      <History className="w-5 h-5 text-rose-400" />
+                      <History className="w-5 h-5 text-primary-400" />
                       <h3 className="font-bold text-lg text-white">Download History</h3>
                     </div>
                     <button
@@ -664,7 +673,7 @@ function App() {
                               {item.title}
                             </h4>
                             <div className="flex items-center space-x-2 text-xs text-slate-400">
-                              <span className="bg-rose-500/10 px-2 py-0.5 rounded text-[10px] font-bold text-rose-400">
+                              <span className="bg-primary-500/10 px-2 py-0.5 rounded text-[10px] font-bold text-primary-400">
                                 {item.resolution}
                               </span>
                               <span>•</span>
@@ -678,14 +687,14 @@ function App() {
                           <div className="flex flex-col space-y-2 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleOpenFolder(item.file_path)}
-                              className="p-1.5 rounded-lg bg-slate-900 border border-white/10 hover:bg-rose-600 hover:border-rose-600 hover:text-white transition-all focus:outline-none"
+                              className="p-1.5 rounded-lg bg-slate-900 border border-white/10 hover:bg-primary-600 hover:border-primary-600 hover:text-white transition-all focus:outline-none"
                               title="Open File Location"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteHistory(item.id)}
-                              className="p-1.5 rounded-lg bg-slate-900 border border-white/10 hover:bg-rose-600 hover:border-rose-600 hover:text-white transition-all focus:outline-none"
+                              className="p-1.5 rounded-lg bg-slate-900 border border-white/10 hover:bg-primary-600 hover:border-primary-600 hover:text-white transition-all focus:outline-none"
                               title="Delete Item"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -698,8 +707,8 @@ function App() {
                 </div>
 
                 <div className="border-t border-white/10 pt-4 mt-4 flex items-center justify-between text-xs text-slate-500 font-medium">
-                  <span>SnapTube PC v1.0.0</span>
-                  <span className="flex items-center space-x-1 text-rose-400/80">
+                  <span>NovaTube PC v1.0.0</span>
+                  <span className="flex items-center space-x-1 text-primary-400/80">
                     <Bell className="w-3 h-3" />
                     <span>SQLite Database</span>
                   </span>
@@ -735,7 +744,7 @@ function App() {
                 </button>
 
                 <div className="flex items-center space-x-2 border-b border-white/10 pb-4">
-                  <Settings className="w-5 h-5 text-rose-400" />
+                  <Settings className="w-5 h-5 text-primary-400" />
                   <h3 className="font-bold text-lg text-white">NovaTube Settings</h3>
                 </div>
 
@@ -750,7 +759,7 @@ function App() {
                       type="button"
                       onClick={() => setSettings(prev => ({ ...prev, mockMode: !prev.mockMode }))}
                       className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${
-                        settings.mockMode ? "bg-rose-500" : "bg-slate-800"
+                        settings.mockMode ? "bg-primary-500" : "bg-slate-800"
                       }`}
                     >
                       <div
@@ -795,7 +804,7 @@ function App() {
                         onClick={() => setSettings(prev => ({ ...prev, provider: "relay" }))}
                         className={`p-3 rounded-xl border text-center font-bold text-xs uppercase tracking-wide transition-all focus:outline-none ${
                           settings.provider === "relay"
-                            ? "bg-rose-500/20 border-rose-500 text-rose-400 shadow-lg shadow-rose-500/5"
+                            ? "bg-primary-500/20 border-primary-500 text-primary-400 shadow-lg shadow-primary-500/5"
                             : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
                         }`}
                       >
@@ -805,7 +814,7 @@ function App() {
                         onClick={() => setSettings(prev => ({ ...prev, provider: "direct" }))}
                         className={`p-3 rounded-xl border text-center font-bold text-xs uppercase tracking-wide transition-all focus:outline-none ${
                           settings.provider === "direct"
-                            ? "bg-rose-500/20 border-rose-500 text-rose-400 shadow-lg shadow-rose-500/5"
+                            ? "bg-primary-500/20 border-primary-500 text-primary-400 shadow-lg shadow-primary-500/5"
                             : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
                         }`}
                       >
@@ -828,7 +837,7 @@ function App() {
                         value={settings.apiKey}
                         onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
                         placeholder="Enter your youtube-video-fast-downloader key..."
-                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500/50 shadow-inner"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-primary-500/50 shadow-inner"
                       />
                       <span className="text-[10px] text-slate-500 block leading-tight">
                         Your key is stored only on this machine in your local webview storage.
@@ -850,7 +859,7 @@ function App() {
                         value={settings.rapidHost}
                         onChange={(e) => setSettings(prev => ({ ...prev, rapidHost: e.target.value }))}
                         placeholder="youtube-video-fast-downloader-24-7.p.rapidapi.com"
-                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500/50 shadow-inner"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-primary-500/50 shadow-inner"
                       />
                     </motion.div>
                   )}
@@ -869,7 +878,7 @@ function App() {
                         value={settings.relayUrl}
                         onChange={(e) => setSettings(prev => ({ ...prev, relayUrl: e.target.value }))}
                         placeholder="http://localhost:3000/resolve"
-                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500/50 shadow-inner"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-950/60 border border-white/10 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-primary-500/50 shadow-inner"
                       />
                       <span className="text-[10px] text-slate-500 block leading-tight">
                         The thin server that holds the default API key and updates config.
@@ -896,7 +905,7 @@ function App() {
                   </button>
                   <button
                     onClick={() => setIsSettingsOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white font-bold text-xs uppercase transition-all shadow-md focus:outline-none"
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-bold text-xs uppercase transition-all shadow-md focus:outline-none"
                   >
                     Save & Close
                   </button>

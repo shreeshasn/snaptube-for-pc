@@ -270,7 +270,7 @@ app.get("/download", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`SnapTube Thin Relay running on http://localhost:${PORT}`);
+  console.log(`NovaTube Thin Relay running on http://localhost:${PORT}`);
   if (!process.env.RAPIDAPI_KEY) {
     console.log(`[!] RAPIDAPI_KEY is not defined. Running in MOCK MODE.`);
   } else {

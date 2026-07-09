@@ -1,4 +1,4 @@
-# run-dev.ps1 - SnapTube PC Development Starter Script
+# run-dev.ps1 - NovaTube PC Development Starter Script
 
 # 1. Add Cargo and standard compiler paths to Path if gcc is missing
 $hasGcc = Get-Command gcc -ErrorAction SilentlyContinue
@@ -17,7 +17,7 @@ if (-not $hasGcc) {
 # 2. Ensure Junction directory exists and is up to date (dynamically resolved)
 $projectPath = $PSScriptRoot
 $driveRoot = $projectPath.Substring(0, 3)
-$junctionPath = Join-Path $driveRoot "snaptube_temp"
+$junctionPath = Join-Path $driveRoot "novatube_temp"
 
 if (Test-Path $junctionPath) {
     # Remove existing junction safely without deleting target contents
